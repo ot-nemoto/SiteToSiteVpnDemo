@@ -10,9 +10,6 @@ Parameters:
   VyOSInstanceType:
     Type: String
     Default: m3.medium
-  CustomerGatewayBgpAsn:
-    Type: Number
-    Default: 65000
 
 Resources:
      #    #     #  #####      #####
@@ -86,7 +83,7 @@ Resources:
   CustomerGateway:
     Type: AWS::EC2::CustomerGateway
     Properties:
-      BgpAsn: !Ref CustomerGatewayBgpAsn
+      BgpAsn: 65000
       IpAddress: !Ref VyOSEIP
       Type: ipsec.1
 

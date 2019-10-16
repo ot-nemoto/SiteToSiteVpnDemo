@@ -1,0 +1,194 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  AMIId:
+    Type: String
+    Default: ami-0ff21806645c5e492
+  VyOSAMIId:
+    Type: String
+    Default: ami-059473b296f19f858
+  VyOSInstanceType:
+    Type: String
+    Default: m3.medium
+
+Resources:
+     #    #     #  #####      #####
+    # #   #  #  # #     #    #     # # ##### ######
+   #   #  #  #  # #          #       #   #   #
+  #     # #  #  #  #####      #####  #   #   #####
+  ####### #  #  #       #          # #   #   #
+  #     # #  #  # #     #    #     # #   #   #
+  #     #  ## ##   #####      #####  #   #   ######
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.38.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+  Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.38.0.0/24
+      AvailabilityZone: !Select
+      - 0
+      - Fn::GetAZs: !Ref AWS::Region
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+  RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref Subnet
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref Vpc
+  Route:
+    Type: AWS::EC2::Route
+    Properties:
+      GatewayId: !Ref InternetGateway
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref RouteTable
+
+  AwsSiteSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: AwsSiteSecurityGroup
+      GroupDescription: AwsSiteSecurityGroup
+      VpcId: !Ref Vpc
+
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AMIId
+      InstanceType: t2.micro
+      IamInstanceProfile: !Ref IamInstanceProfile
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: true
+        DeviceIndex: 0
+        GroupSet:
+        - !Ref AwsSiteSecurityGroup
+        SubnetId: !Ref Subnet
+      Tags:
+      - Key: Name
+        Value: AwsSiteEC2
+
+   #####                                                      #####
+  #     # #    #  ####  #####  ####  #    # ###### #####     #     # # ##### ######
+  #       #    # #        #   #    # ##  ## #      #    #    #       #   #   #
+  #       #    #  ####    #   #    # # ## # #####  #    #     #####  #   #   #####
+  #       #    #      #   #   #    # #    # #      #####           # #   #   #
+  #     # #    # #    #   #   #    # #    # #      #   #     #     # #   #   #
+   #####   ####   ####    #    ####  #    # ###### #    #     #####  #   #   ######
+  CustomerVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.39.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+  CustomerSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CustomerVpc
+      CidrBlock: 10.39.0.0/24
+      AvailabilityZone: !Select
+      - 0
+      - Fn::GetAZs: !Ref AWS::Region
+  CustomerRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CustomerVpc
+  CustomerRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CustomerRouteTable
+      SubnetId: !Ref CustomerSubnet
+  CustomerInternetGateway:
+    Type: AWS::EC2::InternetGateway
+  CustomerVPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref CustomerInternetGateway
+      VpcId: !Ref CustomerVpc
+  CustomerRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      GatewayId: !Ref CustomerInternetGateway
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref CustomerRouteTable
+
+  CustomerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: CustomerSiteSecurityGroup
+      GroupDescription: CustomerSiteSecurityGroup
+      VpcId: !Ref CustomerVpc
+
+  CustomerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AMIId
+      InstanceType: t2.micro
+      IamInstanceProfile: !Ref IamInstanceProfile
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: true
+        DeviceIndex: 0
+        GroupSet:
+        - !Ref CustomerSecurityGroup
+        SubnetId: !Ref CustomerSubnet
+      Tags:
+      - Key: Name
+        Value: CustomerSiteEC2
+  VyOSEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref VyOSInstance
+  VyOSInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref VyOSAMIId
+      InstanceType: !Ref VyOSInstanceType
+      IamInstanceProfile: !Ref IamInstanceProfile
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: true
+        DeviceIndex: 0
+        GroupSet:
+        - !Ref CustomerSecurityGroup
+        SubnetId: !Ref CustomerSubnet
+      Tags:
+      - Key: Name
+        Value: VyOSEC2
+
+   #####
+  #     #  ####  #    # #    #  ####  #    #
+  #       #    # ##  ## ##  ## #    # ##   #
+  #       #    # # ## # # ## # #    # # #  #
+  #       #    # #    # #    # #    # #  # #
+  #     # #    # #    # #    # #    # #   ##
+   #####   ####  #    # #    #  ####  #    #
+  IamInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+       Version: 2012-10-17
+       Statement:
+       - Effect: Allow
+         Principal:
+           Service:
+           - ec2.amazonaws.com
+         Action:
+         - sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+  IamInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+      - !Ref IamInstanceRole

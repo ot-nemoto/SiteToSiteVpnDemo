@@ -74,6 +74,7 @@ Resources:
         DeviceIndex: 0
         GroupSet:
         - !Ref AwsSiteSecurityGroup
+        - !GetAtt Vpc.DefaultSecurityGroup
         SubnetId: !Ref Subnet
       Tags:
       - Key: Name
@@ -141,6 +142,7 @@ Resources:
         DeviceIndex: 0
         GroupSet:
         - !Ref CustomerSecurityGroup
+        - !GetAtt CustomerVpc.DefaultSecurityGroup
         SubnetId: !Ref CustomerSubnet
       Tags:
       - Key: Name
@@ -160,6 +162,7 @@ Resources:
         DeviceIndex: 0
         GroupSet:
         - !Ref CustomerSecurityGroup
+        - !GetAtt CustomerVpc.DefaultSecurityGroup
         SubnetId: !Ref CustomerSubnet
       Tags:
       - Key: Name

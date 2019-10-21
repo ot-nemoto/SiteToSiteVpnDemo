@@ -118,3 +118,19 @@ ssh -i SiteToSiteVpnDemo.pem vyos@${VyOS_Public_IP}
 ```
 
 設定を反映
+
+```
+configure
+  # [edit]
+
+/* 設定を貼付け */
+
+commit
+  # [edit]
+save
+  # Saving configuration to '/config/config.boot'...
+  # Done
+  # [edit]
+exit
+  # exit
+```

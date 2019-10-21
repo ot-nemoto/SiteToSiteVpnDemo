@@ -23,6 +23,8 @@ aws ec2 create-key-pair \
     --output text > SiteToSiteVpnDemo.pem
 
 chmod 600 SiteToSiteVpnDemo.pem
+ls -l SiteToSiteVpnDemo.pem
+  # -rw------- 1 ec2-user ec2-user 1671 Oct 21 08:29 SiteToSiteVpnDemo.pem
 ```
 
 ## デプロイ
@@ -72,3 +74,22 @@ aws cloudformation describe-stacks \
 ![Download Configuration](https://github.com/ot-nemoto/SiteToSiteVpnDemo/blob/images/download_configuration.png)
 
 ## VyOSにダウンロードした設定を反映
+
+VyOSのパブリックIPアドレスは以下のコマンドから確認できます
+
+```sh
+VyOS_IP=$(aws cloudformation describe-stacks \
+    --stack-name site-to-site-vpn-demo \
+    --query 'Stacks[].Outputs[?OutputKey==`VyOSPublicIp`].OutputValue' \
+    --output text)
+echo ${VyOS_IP}
+  # 54.250.169.14
+```
+
+VyOSにログイン
+
+```sh
+ssh -i SiteToSiteVpnDemo.pem vyos@${VyOS_IP}
+```
+
+設定を反映

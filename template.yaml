@@ -10,9 +10,6 @@ Parameters:
   VyOSInstanceType:
     Type: String
     Default: m3.medium
-  CustomerGatewayBgpAsn:
-    Type: Number
-    Default: 65000
 
 Resources:
      #    #     #  #####      #####
@@ -45,25 +42,31 @@ Resources:
     Properties:
       RouteTableId: !Ref RouteTable
       SubnetId: !Ref Subnet
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-  VPCGatewayAttachment:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      InternetGatewayId: !Ref InternetGateway
-      VpcId: !Ref Vpc
-  Route:
-    Type: AWS::EC2::Route
-    Properties:
-      GatewayId: !Ref InternetGateway
-      DestinationCidrBlock: 0.0.0.0/0
-      RouteTableId: !Ref RouteTable
+#  InternetGateway:
+#    Type: AWS::EC2::InternetGateway
+#  VPCGatewayAttachment:
+#    Type: AWS::EC2::VPCGatewayAttachment
+#    Properties:
+#      InternetGatewayId: !Ref InternetGateway
+#      VpcId: !Ref Vpc
+#  Route:
+#    Type: AWS::EC2::Route
+#    Properties:
+#      GatewayId: !Ref InternetGateway
+#      DestinationCidrBlock: 0.0.0.0/0
+#      RouteTableId: !Ref RouteTable
 
   AwsSiteSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: AwsSiteSecurityGroup
       GroupDescription: AwsSiteSecurityGroup
+      SecurityGroupIngress:
+      - IpProtocol: -1
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 10.39.0.0/16
+        Description: CustomerSite Private IP
       VpcId: !Ref Vpc
 
   Instance:
@@ -86,9 +89,18 @@ Resources:
   CustomerGateway:
     Type: AWS::EC2::CustomerGateway
     Properties:
-      BgpAsn: !Ref CustomerGatewayBgpAsn
+      BgpAsn: 65000
       IpAddress: !Ref VyOSEIP
       Type: ipsec.1
+  VPNGateway:
+    Type: AWS::EC2::VPNGateway
+    Properties:
+      Type: ipsec.1
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      VpnGatewayId: !Ref VPNGateway
 
    #####                                                      #####
   #     # #    #  ####  #####  ####  #    # ###### #####     #     # # ##### ######
@@ -139,6 +151,12 @@ Resources:
     Properties:
       GroupName: CustomerSiteSecurityGroup
       GroupDescription: CustomerSiteSecurityGroup
+      SecurityGroupIngress:
+      - IpProtocol: -1
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 10.38.0.0/16
+        Description: AwsSite Private IP
       VpcId: !Ref CustomerVpc
 
   CustomerInstance:

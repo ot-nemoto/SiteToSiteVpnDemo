@@ -42,12 +42,33 @@ aws cloudformation create-stack \
     --template-body file://template.yaml
 ```
 
-デフォルトでは、SecurityGroupで **0.0.0.0/0** を許可していしまうので、自身の環境のパブリックIPアドレスを指定し、スタックを作成することを推奨（e.g. 自身のパブリックIPアドレスが **172.217.25.78** の場合）
+デフォルトでは、SecurityGroupで **0.0.0.0/0** を許可していしまうので、自身の環境のパブリックIPアドレスを指定し、スタックを作成することを推奨（e.g. EC2インスタンスから作業しているケース）
 
 ```sh
+PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+
 aws cloudformation create-stack \
     --stack-name site-to-site-vpn-demo \
     --capabilities CAPABILITY_IAM \
-    --parameters ParameterKey=LocalPublicIp,ParameterValue=172.217.25.78/32 \
+    --parameters ParameterKey=LocalPublicIp,ParameterValue=${PUBLIC_IP}/32 \
     --template-body file://template.yaml
 ```
+
+## VPN ConnectionからVyOSの設定をダウンロード
+
+VPN ConnectionのURLは以下のコマンドから確認できます
+
+```sh
+aws cloudformation describe-stacks \
+    --stack-name site-to-site-vpn-demo \
+    --query 'Stacks[].Outputs[?OutputKey==`VpnConnectionUrl`].OutputValue' \
+    --output text
+```
+
+**Download Configuraiton** > **Download**
+
+![Download Configuration](https://github.com/ot-nemoto/SiteToSiteVpnDemo/blob/images/download_configuration.png)
+
+## VyOSにダウンロードした設定を反映
+
+

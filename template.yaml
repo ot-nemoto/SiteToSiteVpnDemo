@@ -231,3 +231,7 @@ Resources:
         Value: VyOSEC2
       SourceDestCheck: false
       KeyName: !Ref KeyName
+
+Outputs:
+  VpnConnectionUrl:
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/vpc/home?region=${AWS::Region}#VpnConnections:search=${VPNConnection};sort=VpnConnectionId"

@@ -92,7 +92,6 @@ Resources:
     Properties:
       ImageId: !Ref AMIId
       InstanceType: t2.micro
-#      IamInstanceProfile: !Ref IamInstanceProfile
       NetworkInterfaces:
       - AssociatePublicIpAddress: true
         DeviceIndex: 0
@@ -200,7 +199,6 @@ Resources:
     Properties:
       ImageId: !Ref AMIId
       InstanceType: t2.micro
-#      IamInstanceProfile: !Ref IamInstanceProfile
       NetworkInterfaces:
       - AssociatePublicIpAddress: true
         DeviceIndex: 0
@@ -221,7 +219,6 @@ Resources:
     Properties:
       ImageId: !Ref VyOSAMIId
       InstanceType: !Ref VyOSInstanceType
-#      IamInstanceProfile: !Ref IamInstanceProfile
       NetworkInterfaces:
       - AssociatePublicIpAddress: true
         DeviceIndex: 0
@@ -234,31 +231,3 @@ Resources:
         Value: VyOSEC2
       SourceDestCheck: false
       KeyName: !Ref KeyName
-
-   #####
-  #     #  ####  #    # #    #  ####  #    #
-  #       #    # ##  ## ##  ## #    # ##   #
-  #       #    # # ## # # ## # #    # # #  #
-  #       #    # #    # #    # #    # #  # #
-  #     # #    # #    # #    # #    # #   ##
-   #####   ####  #    # #    #  ####  #    #
-#  IamInstanceRole:
-#    Type: AWS::IAM::Role
-#    Properties:
-#      AssumeRolePolicyDocument:
-#       Version: 2012-10-17
-#       Statement:
-#       - Effect: Allow
-#         Principal:
-#           Service:
-#           - ec2.amazonaws.com
-#         Action:
-#         - sts:AssumeRole
-#      ManagedPolicyArns:
-#      - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
-#  IamInstanceProfile:
-#    Type: AWS::IAM::InstanceProfile
-#    Properties:
-#      Path: /
-#      Roles:
-#      - !Ref IamInstanceRole

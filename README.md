@@ -6,10 +6,10 @@
 
 ## 事前準備
 
-- デモで使うVyOSのイメージはFree Trial(30days)のある有償版を利用し、Subscribeする必要があります。
-- [VsOS Marketplace page](https://aws.amazon.com/marketplace/pp/B07N3X1P1T?qid=1555959590559&sr=0-1&ref_=srh_res_product_title)
-  - Continue to Subscribe
-  - Accept Terms
+- デモで使うVyOSのイメージはFree Trial(30days)のある有償版を利用し、Subscribeする必要があります
+  - [VsOS Marketplace page](https://aws.amazon.com/marketplace/pp/B07N3X1P1T?qid=1555959590559&sr=0-1&ref_=srh_res_product_title)
+    - Continue to Subscribe
+    - Accept Terms
 
 - インスタンス接続用鍵
   - 既にある場合は作成しなくても問題ありません
@@ -24,6 +24,16 @@ aws ec2 create-key-pair \
 ```
 
 ## デプロイ
+
+**Properties**
+
+|Name|Type|Default|Description|
+|--|--|--|--|
+|AMIId|String|ami-0ff21806645c5e492|Amazon Linux 2 AMI (HVM), SSD Volume Type|
+|VyOSAMIId|String|ami-059473b296f19f858|VyOS (HVM) 1.2.3|
+|VyOSInstanceType|String|m3.medium|VyOSのインスタンスタイプ|
+|KeyName|AWS::EC2::KeyPair::KeyName|SiteToSiteVpnDemo|キーペア名|
+|LocalPublicIp|String|0.0.0.0/0|自身の環境のパブリックIPアドレス|
 
 ```sh
 aws cloudformation create-stack \

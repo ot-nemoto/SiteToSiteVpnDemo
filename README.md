@@ -119,7 +119,7 @@ ssh -i SiteToSiteVpnDemo.pem vyos@${VyOS_Public_IP}
 
 設定を反映
 
-```
+```sh
 configure
   # [edit]
 
@@ -133,4 +133,19 @@ save
   # [edit]
 exit
   # exit
+```
+
+## 動作確認
+
+**AWS Site**
+
+```sh
+AwsSite_Public_IP=$(aws cloudformation describe-stacks \
+    --stack-name site-to-site-vpn-demo \
+    --query 'Stacks[].Outputs[?OutputKey==`AwsSiteInstancePublicIp`].OutputValue' \
+    --output text)
+echo ${AwsSite_Public_IP}
+  # 54.64.55.194
+
+ssh -i SiteToSiteVpnDemo.pem ec2-user@${AwsSite_Public_IP}
 ```

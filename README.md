@@ -73,23 +73,48 @@ aws cloudformation describe-stacks \
 
 ![Download Configuration](https://github.com/ot-nemoto/SiteToSiteVpnDemo/blob/images/download_configuration.png)
 
-## VyOSにダウンロードした設定を反映
+## ダウンロードした設定を修正
+
+**local-address** がVyOSのパブリックIPアドレスで定義されているので、ローカルIPアドレスに変更する
 
 VyOSのパブリックIPアドレスは以下のコマンドから確認できます
 
 ```sh
-VyOS_IP=$(aws cloudformation describe-stacks \
+VyOS_Public_IP=$(aws cloudformation describe-stacks \
     --stack-name site-to-site-vpn-demo \
     --query 'Stacks[].Outputs[?OutputKey==`VyOSPublicIp`].OutputValue' \
     --output text)
-echo ${VyOS_IP}
+echo ${VyOS_Public_IP}
   # 54.250.169.14
 ```
+
+VyOSのプライベートIPアドレスは以下のコマンドから確認できます
+
+```sh
+VyOS_Private_IP=$(aws cloudformation describe-stacks \
+    --stack-name site-to-site-vpn-demo \
+    --query 'Stacks[].Outputs[?OutputKey==`VyOSPrivateIp`].OutputValue' \
+    --output text)
+echo ${VyOS_Private_IP}
+  # 10.39.0.30
+```
+
+**VPN_ID**.txt
+
+```
+set vpn ipsec site-to-site peer 13.113.120.252 local-address '54.250.169.14'
+set vpn ipsec site-to-site peer 52.193.148.209 local-address '54.250.169.14'
+↓
+set vpn ipsec site-to-site peer 13.113.120.252 local-address '10.39.0.30'
+set vpn ipsec site-to-site peer 52.193.148.209 local-address '10.39.0.30'
+```
+
+## VyOSにダウンロードした設定を反映
 
 VyOSにログイン
 
 ```sh
-ssh -i SiteToSiteVpnDemo.pem vyos@${VyOS_IP}
+ssh -i SiteToSiteVpnDemo.pem vyos@${VyOS_Public_IP}
 ```
 
 設定を反映

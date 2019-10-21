@@ -21,6 +21,8 @@ aws ec2 create-key-pair \
     --query 'KeyMaterial' \
     --region ap-northeast-1 \
     --output text > SiteToSiteVpnDemo.pem
+
+chmod 600 SiteToSiteVpnDemo.pem
 ```
 
 ## デプロイ
@@ -70,5 +72,3 @@ aws cloudformation describe-stacks \
 ![Download Configuration](https://github.com/ot-nemoto/SiteToSiteVpnDemo/blob/images/download_configuration.png)
 
 ## VyOSにダウンロードした設定を反映
-
-

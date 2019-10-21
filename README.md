@@ -11,11 +11,33 @@
   - Continue to Subscribe
   - Accept Terms
 
+- インスタンス接続用鍵
+  - 既にある場合は作成しなくても問題ありません
+  - スタック作成時に、デフォルトで **SiteToSiteVpnDemo** というキー名を指定しているので、作成済みのキー名（`KeyName`）を指定して下さい。
+
+```sh
+aws ec2 create-key-pair \
+    --key-name SiteToSiteVpnDemo \
+    --query 'KeyMaterial' \
+    --region ap-northeast-1 \
+    --output text > SiteToSiteVpnDemo.pem
+```
+
 ## デプロイ
 
 ```sh
 aws cloudformation create-stack \
     --stack-name site-to-site-vpn-demo \
     --capabilities CAPABILITY_IAM \
+    --template-body file://template.yaml
+```
+
+デフォルトでは、SecurityGroupで **0.0.0.0/0** を許可していしまうので、自身の環境のパブリックIPアドレスを指定し、スタックを作成することを推奨（e.g. 自身のパブリックIPアドレスが **172.217.25.78** の場合）
+
+```sh
+aws cloudformation create-stack \
+    --stack-name site-to-site-vpn-demo \
+    --capabilities CAPABILITY_IAM \
+    --parameters ParameterKey=LocalPublicIp,ParameterValue=172.217.25.78/32 \
     --template-body file://template.yaml
 ```

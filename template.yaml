@@ -10,6 +10,12 @@ Parameters:
   VyOSInstanceType:
     Type: String
     Default: m3.medium
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: SiteToSiteVpnDemo
+  LocalPublicIp:
+    Type: String
+    Default: 0.0.0.0/0
 
 Resources:
      #    #     #  #####      #####
@@ -33,28 +39,35 @@ Resources:
       AvailabilityZone: !Select
       - 0
       - Fn::GetAZs: !Ref AWS::Region
-  RouteTable:
+  AwsRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref Vpc
-  RouteTableAssociation:
+  AwsRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref RouteTable
+      RouteTableId: !Ref AwsRouteTable
       SubnetId: !Ref Subnet
-#  InternetGateway:
-#    Type: AWS::EC2::InternetGateway
-#  VPCGatewayAttachment:
-#    Type: AWS::EC2::VPCGatewayAttachment
-#    Properties:
-#      InternetGatewayId: !Ref InternetGateway
-#      VpcId: !Ref Vpc
-#  Route:
-#    Type: AWS::EC2::Route
-#    Properties:
-#      GatewayId: !Ref InternetGateway
-#      DestinationCidrBlock: 0.0.0.0/0
-#      RouteTableId: !Ref RouteTable
+  AwsInternetGateway:
+    Type: AWS::EC2::InternetGateway
+  AwsVPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref AwsInternetGateway
+      VpcId: !Ref Vpc
+  AwsRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      GatewayId: !Ref AwsInternetGateway
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref AwsRouteTable
+  AwsRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      GatewayId: !Ref VPNGateway
+      DestinationCidrBlock: 10.39.0.0/16
+      RouteTableId: !Ref AwsRouteTable
+    DependsOn: VPCGatewayAttachment
 
   AwsSiteSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -67,6 +80,11 @@ Resources:
         ToPort: 65535
         CidrIp: 10.39.0.0/16
         Description: CustomerSite Private IP
+      - IpProtocol: -1
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: !Ref LocalPublicIp
+        Description: Local Public Ip
       VpcId: !Ref Vpc
 
   Instance:
@@ -74,7 +92,7 @@ Resources:
     Properties:
       ImageId: !Ref AMIId
       InstanceType: t2.micro
-      IamInstanceProfile: !Ref IamInstanceProfile
+#      IamInstanceProfile: !Ref IamInstanceProfile
       NetworkInterfaces:
       - AssociatePublicIpAddress: true
         DeviceIndex: 0
@@ -85,6 +103,7 @@ Resources:
       Tags:
       - Key: Name
         Value: AwsSiteEC2
+      KeyName: !Ref KeyName
 
   CustomerGateway:
     Type: AWS::EC2::CustomerGateway
@@ -100,6 +119,12 @@ Resources:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId: !Ref Vpc
+      VpnGatewayId: !Ref VPNGateway
+  VPNConnection:
+    Type: AWS::EC2::VPNConnection
+    Properties:
+      Type: ipsec.1
+      CustomerGatewayId: !Ref CustomerGateway
       VpnGatewayId: !Ref VPNGateway
 
    #####                                                      #####
@@ -139,11 +164,17 @@ Resources:
     Properties:
       InternetGatewayId: !Ref CustomerInternetGateway
       VpcId: !Ref CustomerVpc
-  CustomerRoute:
+  CustomerRoute1:
     Type: AWS::EC2::Route
     Properties:
       GatewayId: !Ref CustomerInternetGateway
       DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref CustomerRouteTable
+  CustomerRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      InstanceId: !Ref VyOSInstance
+      DestinationCidrBlock: 10.38.0.0/16
       RouteTableId: !Ref CustomerRouteTable
 
   CustomerSecurityGroup:
@@ -157,6 +188,11 @@ Resources:
         ToPort: 65535
         CidrIp: 10.38.0.0/16
         Description: AwsSite Private IP
+      - IpProtocol: -1
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: !Ref LocalPublicIp
+        Description: Local Public Ip
       VpcId: !Ref CustomerVpc
 
   CustomerInstance:
@@ -164,7 +200,7 @@ Resources:
     Properties:
       ImageId: !Ref AMIId
       InstanceType: t2.micro
-      IamInstanceProfile: !Ref IamInstanceProfile
+#      IamInstanceProfile: !Ref IamInstanceProfile
       NetworkInterfaces:
       - AssociatePublicIpAddress: true
         DeviceIndex: 0
@@ -175,6 +211,7 @@ Resources:
       Tags:
       - Key: Name
         Value: CustomerSiteEC2
+      KeyName: !Ref KeyName
   VyOSEIP:
     Type: AWS::EC2::EIP
     Properties:
@@ -184,7 +221,7 @@ Resources:
     Properties:
       ImageId: !Ref VyOSAMIId
       InstanceType: !Ref VyOSInstanceType
-      IamInstanceProfile: !Ref IamInstanceProfile
+#      IamInstanceProfile: !Ref IamInstanceProfile
       NetworkInterfaces:
       - AssociatePublicIpAddress: true
         DeviceIndex: 0
@@ -195,6 +232,8 @@ Resources:
       Tags:
       - Key: Name
         Value: VyOSEC2
+      SourceDestCheck: false
+      KeyName: !Ref KeyName
 
    #####
   #     #  ####  #    # #    #  ####  #    #
@@ -203,23 +242,23 @@ Resources:
   #       #    # #    # #    # #    # #  # #
   #     # #    # #    # #    # #    # #   ##
    #####   ####  #    # #    #  ####  #    #
-  IamInstanceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-       Version: 2012-10-17
-       Statement:
-       - Effect: Allow
-         Principal:
-           Service:
-           - ec2.amazonaws.com
-         Action:
-         - sts:AssumeRole
-      ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
-  IamInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Path: /
-      Roles:
-      - !Ref IamInstanceRole
+#  IamInstanceRole:
+#    Type: AWS::IAM::Role
+#    Properties:
+#      AssumeRolePolicyDocument:
+#       Version: 2012-10-17
+#       Statement:
+#       - Effect: Allow
+#         Principal:
+#           Service:
+#           - ec2.amazonaws.com
+#         Action:
+#         - sts:AssumeRole
+#      ManagedPolicyArns:
+#      - arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM
+#  IamInstanceProfile:
+#    Type: AWS::IAM::InstanceProfile
+#    Properties:
+#      Path: /
+#      Roles:
+#      - !Ref IamInstanceRole

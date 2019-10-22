@@ -34,7 +34,7 @@ ls -l SiteToSiteVpnDemo.pem
 |Name|Type|Default|Description|
 |--|--|--|--|
 |AMIId|String|ami-0ff21806645c5e492|Amazon Linux 2 AMI (HVM), SSD Volume Type|
-|VyOSAMIId|String|ami-059473b296f19f858|VyOS (HVM) 1.2.3|
+|VyOSAMIId|String|ami-059473b296f19f858|VyOS (HVM) **1.2.3**|
 |VyOSInstanceType|String|m3.medium|VyOSのインスタンスタイプ|
 |KeyName|AWS::EC2::KeyPair::KeyName|SiteToSiteVpnDemo|キーペア名|
 |LocalPublicIp|String|0.0.0.0/0|自身の環境のパブリックIPアドレス|
@@ -145,7 +145,20 @@ AwsSite_Public_IP=$(aws cloudformation describe-stacks \
     --query 'Stacks[].Outputs[?OutputKey==`AwsSiteInstancePublicIp`].OutputValue' \
     --output text)
 echo ${AwsSite_Public_IP}
-  # 54.64.55.194
+  # (e.g.) 54.64.55.194
 
 ssh -i SiteToSiteVpnDemo.pem ec2-user@${AwsSite_Public_IP}
+```
+
+**Customer Site**
+
+```sh
+Customer_Public_IP=$(aws cloudformation describe-stacks \
+    --stack-name site-to-site-vpn-demo \
+    --query 'Stacks[].Outputs[?OutputKey==`CustomerInstancePublicIp`].OutputValue' \
+    --output text)
+echo ${Customer_Public_IP}
+  # (e.g.) 54.199.216.242
+
+ssh -i SiteToSiteVpnDemo.pem ec2-user@${Customer_Public_IP}
 ```

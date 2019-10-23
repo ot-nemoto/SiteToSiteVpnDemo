@@ -105,11 +105,39 @@ aws cloudformation describe-stacks \
 **VPN_ID**.txt
 
 ```
-set vpn ipsec site-to-site peer 13.113.120.252 local-address '54.250.169.14'
-set vpn ipsec site-to-site peer 52.193.148.209 local-address '54.250.169.14'
+set vpn ipsec site-to-site peer *.*.*.* local-address '54.250.169.14'
 ↓
-set vpn ipsec site-to-site peer 13.113.120.252 local-address '10.39.0.30'
-set vpn ipsec site-to-site peer 52.193.148.209 local-address '10.39.0.30'
+set vpn ipsec site-to-site peer *.*.*.* local-address '10.39.0.30'
+```
+
+---
+
+- ダウンロードしたConfigurationをVyOSへ投入した際に、Failedとなる項目があったので、修正する。
+
+  ```
+  set protocols bgp 65000 neighbor *.*.*.* soft-reconfiguration 'inbound'
+    # 
+    #   Configuration path: protocols bgp 65000 neighbor 169.254.117.173 [soft-reconfiguration] is not valid
+    #   Set failed
+    # 
+    # [edit]
+
+  set protocols bgp 65000 network *.*.*.*/*
+    # 
+    #   Configuration path: protocols bgp 65000 [network] is not valid
+    #   Set failed
+    # 
+    # [edit]
+  ```
+
+**VPN_ID**.txt
+
+```
+set protocols bgp 65000 neighbor *.*.*.* soft-reconfiguration 'inbound'
+set protocols bgp 65000 network *.*.*.*/*
+↓
+set protocols bgp 65000 neighbor *.*.*.* address-family ipv4-unicast soft-reconfiguration 'inbound'
+set protocols bgp 65000 address-family ipv4-unicast network *.*.*.*/*
 ```
 
 ## VyOSにダウンロードした設定を反映

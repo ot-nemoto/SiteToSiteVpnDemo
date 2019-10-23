@@ -179,6 +179,13 @@ AwsSite_Public_IP=$(aws cloudformation describe-stacks \
 echo ${AwsSite_Public_IP}
   # (e.g.) 54.64.55.194
 
+# CUSTOMER_SITE_PRIVATE_IP
+aws cloudformation describe-stacks \
+    --stack-name site-to-site-vpn-demo \
+    --query 'Stacks[].Outputs[?OutputKey==`CustomerInstancePrivateIp`].OutputValue' \
+    --output text
+  # (e.g.) 10.39.0.144
+
 ssh -i SiteToSiteVpnDemo.pem ec2-user@${AwsSite_Public_IP}
 
 ping CUSTOMER_SITE_PRIVATE_IP
@@ -193,6 +200,13 @@ Customer_Public_IP=$(aws cloudformation describe-stacks \
     --output text)
 echo ${Customer_Public_IP}
   # (e.g.) 54.199.216.242
+
+# AWS_SITE_PRIVATE_IP
+aws cloudformation describe-stacks \
+    --stack-name site-to-site-vpn-demo \
+    --query 'Stacks[].Outputs[?OutputKey==`AwsSiteInstancePrivateIp`].OutputValue' \
+    --output text
+  # (e.g.) 10.38.0.218
 
 ssh -i SiteToSiteVpnDemo.pem ec2-user@${Customer_Public_IP}
 

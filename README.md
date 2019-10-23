@@ -50,6 +50,8 @@ aws cloudformation create-stack \
 
 ```sh
 PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
+echo ${PUBLIC_IP}
+  # (e.g.) 13.231.159.206
 
 aws cloudformation create-stack \
     --stack-name site-to-site-vpn-demo \
@@ -67,6 +69,7 @@ aws cloudformation describe-stacks \
     --stack-name site-to-site-vpn-demo \
     --query 'Stacks[].Outputs[?OutputKey==`VpnConnectionUrl`].OutputValue' \
     --output text
+  # (e.g.) https://ap-northeast-1.console.aws.amazon.com/vpc/home?region=ap-northeast-1#VpnConnections:search=vpn-020e8e85dbef567f7;sort=VpnConnectionId
 ```
 
 **Download Configuraiton** > **Download**
@@ -75,29 +78,29 @@ aws cloudformation describe-stacks \
 
 ## ダウンロードした設定を修正
 
-**local-address** がVyOSのパブリックIPアドレスで定義されているので、ローカルIPアドレスに変更する
+- **local-address** がVyOSのパブリックIPアドレスで定義されているので、ローカルIPアドレスに変更する
 
-VyOSのパブリックIPアドレスは以下のコマンドから確認できます
+  - VyOSのパブリックIPアドレスは以下のコマンドから確認できます
 
-```sh
-VyOS_Public_IP=$(aws cloudformation describe-stacks \
-    --stack-name site-to-site-vpn-demo \
-    --query 'Stacks[].Outputs[?OutputKey==`VyOSPublicIp`].OutputValue' \
-    --output text)
-echo ${VyOS_Public_IP}
-  # 54.250.169.14
-```
+    ```sh
+    VyOS_Public_IP=$(aws cloudformation describe-stacks \
+        --stack-name site-to-site-vpn-demo \
+        --query 'Stacks[].Outputs[?OutputKey==`VyOSPublicIp`].OutputValue' \
+        --output text)
+    echo ${VyOS_Public_IP}
+      # (e.g.) 54.250.169.14
+    ```
 
-VyOSのプライベートIPアドレスは以下のコマンドから確認できます
+  - VyOSのプライベートIPアドレスは以下のコマンドから確認できます
 
-```sh
-VyOS_Private_IP=$(aws cloudformation describe-stacks \
-    --stack-name site-to-site-vpn-demo \
-    --query 'Stacks[].Outputs[?OutputKey==`VyOSPrivateIp`].OutputValue' \
-    --output text)
-echo ${VyOS_Private_IP}
-  # 10.39.0.30
-```
+    ```sh
+    VyOS_Private_IP=$(aws cloudformation describe-stacks \
+        --stack-name site-to-site-vpn-demo \
+        --query 'Stacks[].Outputs[?OutputKey==`VyOSPrivateIp`].OutputValue' \
+        --output text)
+    echo ${VyOS_Private_IP}
+      # (e.g.) 10.39.0.30
+    ```
 
 **VPN_ID**.txt
 

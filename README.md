@@ -117,7 +117,7 @@ set vpn ipsec site-to-site peer *.*.*.* local-address '10.39.0.30'
   ```
   set protocols bgp 65000 neighbor *.*.*.* soft-reconfiguration 'inbound'
     # 
-    #   Configuration path: protocols bgp 65000 neighbor 169.254.117.173 [soft-reconfiguration] is not valid
+    #   Configuration path: protocols bgp 65000 neighbor *.*.*.* [soft-reconfiguration] is not valid
     #   Set failed
     # 
     # [edit]

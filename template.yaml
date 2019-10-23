@@ -235,3 +235,15 @@ Resources:
 Outputs:
   VpnConnectionUrl:
     Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/vpc/home?region=${AWS::Region}#VpnConnections:search=${VPNConnection};sort=VpnConnectionId"
+  VyOSPublicIp:
+    Value: !GetAtt VyOSInstance.PublicIp
+  VyOSPrivateIp:
+    Value: !GetAtt VyOSInstance.PrivateIp
+  CustomerInstancePublicIp:
+    Value: !GetAtt CustomerInstance.PublicIp
+  CustomerInstancePrivateIp:
+    Value: !GetAtt CustomerInstance.PrivateIp
+  AwsSiteInstancePublicIp:
+    Value: !GetAtt Instance.PublicIp
+  AwsSiteInstancePrivateIp:
+    Value: !GetAtt Instance.PrivateIp

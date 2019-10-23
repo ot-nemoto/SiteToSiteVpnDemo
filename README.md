@@ -113,6 +113,7 @@ set vpn ipsec site-to-site peer *.*.*.* local-address '10.39.0.30'
 ---
 
 - ダウンロードしたConfigurationをVyOSへ投入した際に、Failedとなる項目があったので、修正する。
+  - このまま設定を流すと、とりあえずVPN ConnectionのステータスはUPされるが、**0 BGP ROUTES**のままなので、疎通出来ない
 
   ```
   set protocols bgp 65000 neighbor *.*.*.* soft-reconfiguration 'inbound'
@@ -179,6 +180,8 @@ echo ${AwsSite_Public_IP}
   # (e.g.) 54.64.55.194
 
 ssh -i SiteToSiteVpnDemo.pem ec2-user@${AwsSite_Public_IP}
+
+ping CUSTOMER_SITE_PRIVATE_IP
 ```
 
 **Customer Site**
@@ -192,4 +195,6 @@ echo ${Customer_Public_IP}
   # (e.g.) 54.199.216.242
 
 ssh -i SiteToSiteVpnDemo.pem ec2-user@${Customer_Public_IP}
+
+ping AWS_SITE_PRIVATE_IP
 ```

@@ -1,0 +1,249 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  AMIId:
+    Type: String
+    Default: ami-0ff21806645c5e492
+  VyOSAMIId:
+    Type: String
+    Default: ami-059473b296f19f858
+  VyOSInstanceType:
+    Type: String
+    Default: m3.medium
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: SiteToSiteVpnDemo
+  LocalPublicIp:
+    Type: String
+    Default: 0.0.0.0/0
+
+Resources:
+     #    #     #  #####      #####
+    # #   #  #  # #     #    #     # # ##### ######
+   #   #  #  #  # #          #       #   #   #
+  #     # #  #  #  #####      #####  #   #   #####
+  ####### #  #  #       #          # #   #   #
+  #     # #  #  # #     #    #     # #   #   #
+  #     #  ## ##   #####      #####  #   #   ######
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.38.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+  Subnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.38.0.0/24
+      AvailabilityZone: !Select
+      - 0
+      - Fn::GetAZs: !Ref AWS::Region
+  AwsRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+  AwsRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref AwsRouteTable
+      SubnetId: !Ref Subnet
+  AwsInternetGateway:
+    Type: AWS::EC2::InternetGateway
+  AwsVPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref AwsInternetGateway
+      VpcId: !Ref Vpc
+  AwsRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      GatewayId: !Ref AwsInternetGateway
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref AwsRouteTable
+  AwsRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      GatewayId: !Ref VPNGateway
+      DestinationCidrBlock: 10.39.0.0/16
+      RouteTableId: !Ref AwsRouteTable
+    DependsOn: VPCGatewayAttachment
+
+  AwsSiteSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: AwsSiteSecurityGroup
+      GroupDescription: AwsSiteSecurityGroup
+      SecurityGroupIngress:
+      - IpProtocol: -1
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 10.39.0.0/16
+        Description: CustomerSite Private IP
+      - IpProtocol: -1
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: !Ref LocalPublicIp
+        Description: Local Public Ip
+      VpcId: !Ref Vpc
+
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AMIId
+      InstanceType: t2.micro
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: true
+        DeviceIndex: 0
+        GroupSet:
+        - !Ref AwsSiteSecurityGroup
+        - !GetAtt Vpc.DefaultSecurityGroup
+        SubnetId: !Ref Subnet
+      Tags:
+      - Key: Name
+        Value: AwsSiteEC2
+      KeyName: !Ref KeyName
+
+  CustomerGateway:
+    Type: AWS::EC2::CustomerGateway
+    Properties:
+      BgpAsn: 65000
+      IpAddress: !Ref VyOSEIP
+      Type: ipsec.1
+  VPNGateway:
+    Type: AWS::EC2::VPNGateway
+    Properties:
+      Type: ipsec.1
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      VpnGatewayId: !Ref VPNGateway
+  VPNConnection:
+    Type: AWS::EC2::VPNConnection
+    Properties:
+      Type: ipsec.1
+      CustomerGatewayId: !Ref CustomerGateway
+      VpnGatewayId: !Ref VPNGateway
+
+   #####                                                      #####
+  #     # #    #  ####  #####  ####  #    # ###### #####     #     # # ##### ######
+  #       #    # #        #   #    # ##  ## #      #    #    #       #   #   #
+  #       #    #  ####    #   #    # # ## # #####  #    #     #####  #   #   #####
+  #       #    #      #   #   #    # #    # #      #####           # #   #   #
+  #     # #    # #    #   #   #    # #    # #      #   #     #     # #   #   #
+   #####   ####   ####    #    ####  #    # ###### #    #     #####  #   #   ######
+  CustomerVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.39.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+  CustomerSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CustomerVpc
+      CidrBlock: 10.39.0.0/24
+      AvailabilityZone: !Select
+      - 0
+      - Fn::GetAZs: !Ref AWS::Region
+  CustomerRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CustomerVpc
+  CustomerRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CustomerRouteTable
+      SubnetId: !Ref CustomerSubnet
+  CustomerInternetGateway:
+    Type: AWS::EC2::InternetGateway
+  CustomerVPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref CustomerInternetGateway
+      VpcId: !Ref CustomerVpc
+  CustomerRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      GatewayId: !Ref CustomerInternetGateway
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref CustomerRouteTable
+  CustomerRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      InstanceId: !Ref VyOSInstance
+      DestinationCidrBlock: 10.38.0.0/16
+      RouteTableId: !Ref CustomerRouteTable
+
+  CustomerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: CustomerSiteSecurityGroup
+      GroupDescription: CustomerSiteSecurityGroup
+      SecurityGroupIngress:
+      - IpProtocol: -1
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: 10.38.0.0/16
+        Description: AwsSite Private IP
+      - IpProtocol: -1
+        FromPort: 0
+        ToPort: 65535
+        CidrIp: !Ref LocalPublicIp
+        Description: Local Public Ip
+      VpcId: !Ref CustomerVpc
+
+  CustomerInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AMIId
+      InstanceType: t2.micro
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: true
+        DeviceIndex: 0
+        GroupSet:
+        - !Ref CustomerSecurityGroup
+        - !GetAtt CustomerVpc.DefaultSecurityGroup
+        SubnetId: !Ref CustomerSubnet
+      Tags:
+      - Key: Name
+        Value: CustomerSiteEC2
+      KeyName: !Ref KeyName
+  VyOSEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref VyOSInstance
+  VyOSInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref VyOSAMIId
+      InstanceType: !Ref VyOSInstanceType
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: true
+        DeviceIndex: 0
+        GroupSet:
+        - !Ref CustomerSecurityGroup
+        - !GetAtt CustomerVpc.DefaultSecurityGroup
+        SubnetId: !Ref CustomerSubnet
+      Tags:
+      - Key: Name
+        Value: VyOSEC2
+      SourceDestCheck: false
+      KeyName: !Ref KeyName
+
+Outputs:
+  VpnConnectionUrl:
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/vpc/home?region=${AWS::Region}#VpnConnections:search=${VPNConnection};sort=VpnConnectionId"
+  VyOSPublicIp:
+    Value: !GetAtt VyOSInstance.PublicIp
+  VyOSPrivateIp:
+    Value: !GetAtt VyOSInstance.PrivateIp
+  CustomerInstancePublicIp:
+    Value: !GetAtt CustomerInstance.PublicIp
+  CustomerInstancePrivateIp:
+    Value: !GetAtt CustomerInstance.PrivateIp
+  AwsSiteInstancePublicIp:
+    Value: !GetAtt Instance.PublicIp
+  AwsSiteInstancePrivateIp:
+    Value: !GetAtt Instance.PrivateIp

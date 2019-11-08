@@ -2,7 +2,13 @@
 
 ## 概要
 
+- Site to SiteでVPC間を接続するための構成を構築するテンプレート
+- Customer Gateway側のルータには **VyOS** を利用
+- **VyOS** は有償版なので、以下の[事前準備](#事前準備)を参照
+
 ## 構成
+
+![構成](https://github.com/ot-nemoto/SiteToSiteVpnDemo/blob/images/SiteToSiteVpnDemo.png)
 
 ## 事前準備
 

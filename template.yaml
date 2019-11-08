@@ -247,3 +247,5 @@ Outputs:
     Value: !GetAtt Instance.PublicIp
   AwsSiteInstancePrivateIp:
     Value: !GetAtt Instance.PrivateIp
+  VpnConnectionId:
+    Value: !Ref VPNConnection

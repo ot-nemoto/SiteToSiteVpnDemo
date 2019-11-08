@@ -141,6 +141,36 @@ set protocols bgp 65000 neighbor *.*.*.* address-family ipv4-unicast soft-reconf
 set protocols bgp 65000 address-family ipv4-unicast network *.*.*.*/*
 ```
 
+*diff*
+
+```sh
+# (e.g.)
+41c41
+< set vpn ipsec site-to-site peer 3.113.226.144 local-address '54.250.169.14'
+---
+> set vpn ipsec site-to-site peer 3.113.226.144 local-address '10.39.0.30'
+98c98
+< set protocols bgp 65000 neighbor 169.254.39.165 soft-reconfiguration 'inbound'
+---
+> set protocols bgp 65000 neighbor 169.254.39.165 address-family ipv4-unicast soft-reconfiguration 'inbound'
+106c106
+< set protocols bgp 65000 network 0.0.0.0/0
+---
+> set protocols bgp 65000 address-family ipv4-unicast network 0.0.0.0/0
+132c132
+< set vpn ipsec site-to-site peer 52.68.240.29 local-address '54.250.169.14'
+---
+> set vpn ipsec site-to-site peer 52.68.240.29 local-address '10.39.0.30'
+189c189
+< set protocols bgp 65000 neighbor 169.254.174.145 soft-reconfiguration 'inbound'
+---
+> set protocols bgp 65000 neighbor 169.254.174.145 address-family ipv4-unicast soft-reconfiguration 'inbound'
+197c197
+< set protocols bgp 65000 network 0.0.0.0/0
+---
+> set protocols bgp 65000 address-family ipv4-unicast network 0.0.0.0/0
+```
+
 ## VyOSにダウンロードした設定を反映
 
 VyOSにログイン
@@ -165,6 +195,39 @@ save
   # [edit]
 exit
   # exit
+```
+
+## 接続確認
+
+```sh
+VPN_CONNECTION_ID=$(aws cloudformation describe-stacks \
+    --stack-name site-to-site-vpn-demo \
+    --query 'Stacks[].Outputs[?OutputKey==`VpnConnectionId`].OutputValue' \
+    --output text)
+echo ${VPN_CONNECTION_ID}
+  # (e.g.) vpn-082fd63a9cf3a39ee
+
+aws ec2 describe-vpn-connections \
+    --vpn-connection-ids ${VPN_CONNECTION_ID} \
+    --query 'VpnConnections[].VgwTelemetry'
+  # [
+  #     [
+  #         {
+  #             "Status": "UP",
+  #             "AcceptedRouteCount": 1,
+  #             "LastStatusChange": "2019-11-08T08:32:20.000Z",
+  #             "OutsideIpAddress": "3.113.226.144",
+  #             "StatusMessage": "1 BGP ROUTES"
+  #         },
+  #         {
+  #             "Status": "UP",
+  #             "AcceptedRouteCount": 1,
+  #             "LastStatusChange": "2019-11-08T08:31:56.000Z",
+  #             "OutsideIpAddress": "52.68.240.29",
+  #             "StatusMessage": "1 BGP ROUTES"
+  #         }
+  #     ]
+  # ]
 ```
 
 ## 動作確認
